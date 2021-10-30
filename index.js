@@ -11,6 +11,42 @@ app.use(cors());
 app.use(express.json());
 
 
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.jodbj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+
+console.log(uri);
+
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+async function run() {
+    try{
+        await client.connect();
+          console.log('connect to db')
+          const database = client.db("tourPlans");
+          const plansCollection = database.collection("plans");
+
+        //   GET API
+
+        app.get('/plans', async(req, res) => {
+            const cursor = plansCollection.find({});
+            const plans = await cursor.toArray();
+            res.send(plans);
+        });
+        
+        //   POST API
+
+         app.post('/plans', async (req, res) => {
+             const plan = req.body;
+           console.log('hit the post api', plan)
+             const result = await plansCollection.insertOne(plan);
+             console.log(result)
+            res.json(result)
+         });
+
+    } finally{
+        // await client.close();
+    }
+}
+run().catch(console.dir);
 
 app.get('/', (req, res) => {
     res.send('Tour travel server is running');
